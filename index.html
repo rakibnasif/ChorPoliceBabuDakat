@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <!-- this line makes the page fit phone screens -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chor Police Babu Dakat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@500;700;800&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+/* ===== Basic page ===== */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: #1c1a38;
+  color: #fbf3df;
+  font-family: "Hind Siliguri", Arial, sans-serif;
+}
+
+h1, .game-title, .btn, th, .player-score, .card-role, .card-points {
+  font-family: "Baloo Da 2", Arial, sans-serif;
+}
+
+.container {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  background-color: #f4b41a;
+  color: #2a2552;
+  border: none;
+  border-radius: 30px;
+  padding: 12px 26px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 4px;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: #fbf3df;
+  border: 2px solid #3b3769;
+  padding: 8px 18px;
+}
+
+.btn-teal {
+  background-color: #17b3a3;
+}
+
+.btn-pink {
+  background-color: #e0356f;
+  color: white;
+}
+
+/* ===== Screen 1: setup ===== */
+#setup {
+  min-height: 90vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.setup-box {
+  width: 100%;
+  max-width: 440px;
+  background-color: #27244d;
+  border: 2px solid #3b3769;
+  border-radius: 22px;
+  padding: 28px 22px;
+  text-align: center;
+}
+
+.game-title {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1;
+  color: #f4b41a;
+}
+
+.game-title span {
+  color: #e0356f;
+}
+
+.subtitle {
+  color: #a9a3d1;
+  margin: 12px 0 20px 0;
+}
+
+.setup-box input {
+  width: 100%;
+  padding: 13px 16px;
+  margin-bottom: 10px;
+  border: 2px solid #3b3769;
+  border-radius: 12px;
+  background-color: #1c1a38;
+  color: #fbf3df;
+  font-size: 16px;
+}
+
+/* ===== Screen 2: game ===== */
+#game {
+  display: none; /* script.js shows it after Start */
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.top-bar h1 {
+  font-size: 22px;
+  margin: 0;
+  color: #f4b41a;
+}
+
+/* player name boxes (2 per row on phone) */
+#chips {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.player-box {
+  background-color: #27244d;
+  border: 2px solid #3b3769;
+  border-radius: 14px;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.player-box.active {
+  border-color: #f4b41a;
+  background-color: #4c3e44;
+}
+
+.player-score {
+  font-size: 22px;
+  font-weight: 800;
+  color: #f4b41a;
+}
+
+/* message box */
+.stage {
+  background-color: #27244d;
+  border: 2px solid #3b3769;
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 16px;
+  min-height: 110px;
+  text-align: center;
+}
+
+#msg {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+#msg b {
+  color: #f4b41a;
+}
+
+/* ===== Cards ===== */
+/* 2 cards per row on phone */
+#board {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: none;
+  border: none;
+  padding: 0;
+  aspect-ratio: 3 / 4;
+  perspective: 900px; /* needed for the 3D flip */
+  user-select: none;  /* stops text selection when holding */
+  -webkit-touch-callout: none;
+}
+
+.card.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* the part that rotates */
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+/* when the card has class "flip", rotate it */
+.card.flip .card-inner {
+  transform: rotateY(180deg);
+}
+
+/* front and back sit on top of each other */
+.card-front, .card-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  backface-visibility: hidden; /* hide the side facing away */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.card-front {
+  background-color: #fbf3df;
+  color: #2a2552;
+  border: 3px solid #f4b41a;
+}
+
+.card-question {
+  font-size: 50px;
+  font-weight: 800;
+  color: #e0356f;
+}
+
+.card-owner {
+  font-weight: bold;
+}
+
+.card-back {
+  transform: rotateY(180deg);
+  color: white;
+  border: 3px solid rgba(255, 255, 255, 0.5);
+}
+
+.card-role {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.card-points {
+  font-size: 38px;
+  font-weight: 800;
+}
+
+.card-tag {
+  font-size: 13px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  padding: 2px 10px;
+}
+
+/* each role has its own colour */
+.Babu .card-back {
+  background-color: #c98f0a;
+}
+
+.Police .card-back {
+  background-color: #0f8a7e;
+}
+
+.Dakat .card-back {
+  background-color: #e0356f;
+}
+
+.Chor .card-back {
+  background-color: #6f6aa8;
+}
+
+.card.lost .card-back {
+  filter: brightness(0.6);
+}
+
+/* ===== Score table ===== */
+.table-wrap {
+  overflow-x: auto;
+  background-color: #27244d;
+  border: 2px solid #3b3769;
+  border-radius: 16px;
+}
+
+table {
+  width: 100%;
+  min-width: 420px;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+th, td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #3b3769;
+}
+
+th {
+  color: #f4b41a;
+}
+
+tfoot td {
+  font-weight: bold;
+  color: #f4b41a;
+  border-bottom: none;
+}
+
+.empty {
+  color: #a9a3d1;
+}
+
+/* ===== Summary ===== */
+#sumBox {
+  display: none; /* script.js shows it */
+  margin-top: 16px;
+  background-color: #27244d;
+  border: 2px solid #f4b41a;
+  border-radius: 18px;
+  padding: 16px;
+}
+
+#sumBox h2 {
+  color: #f4b41a;
+  margin-top: 0;
+}
+
+.rank-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #3b3769;
+}
+
+.rank-row b {
+  color: #e0356f;
+}
+
+/* ===== Big screens: 4 per row ===== */
+@media (min-width: 700px) {
+  #chips {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  #board {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+
+  .game-title {
+    font-size: 56px;
+  }
+}
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Screen 1: player names -->
+    <section id="setup">
+      <div class="setup-box">
+        <div class="game-title">Chor Police<br><span>Babu Dakat</span></div>
+        <p class="subtitle">Babu hukum dey, Police chhute, Chor-Dakat mukh lukay. Aaj ke dhora porbe?</p>
+        <input placeholder="Player 1" maxlength="14">
+        <input placeholder="Player 2" maxlength="14">
+        <input placeholder="Player 3" maxlength="14">
+        <input placeholder="Player 4" maxlength="14">
+        <button class="btn" id="startBtn">Start game</button>
+      </div>
+    </section>
+
+    <!-- Screen 2: the game -->
+    <section id="game">
+      <div class="top-bar">
+        <h1>Chor Police Babu Dakat</h1>
+        <button class="btn btn-outline" id="sumBtn">Summary</button>
+      </div>
+
+      <div id="chips"></div>
+
+      <div class="stage">
+        <div id="msg"></div>
+        <div id="acts"></div>
+      </div>
+
+      <div id="board"></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead id="thead"></thead>
+          <tbody id="tbody"></tbody>
+          <tfoot id="tfoot"></tfoot>
+        </table>
+      </div>
+
+      <div id="sumBox"></div>
+    </section>
+
+  </div>
+  <script>
+// ===== Game data =====
+var points = { Babu: 100, Police: 80, Dakat: 60, Chor: 40 };
+var roleNames = ["Babu", "Police", "Dakat", "Chor"];
+var ranks = ["Raja", "Minister", "Proja", "Slave"];
+
+var names = [];               // 4 player names
+var totals = [0, 0, 0, 0];    // total score of each player
+var rows = [];                // one entry per finished round
+var roles = [];               // role on each card
+var owner = [];               // which player took each card (null = not taken yet)
+var turn = 0;                 // which player is picking now (0 to 3)
+var phase = "";               // pick, peek, reveal, order, guess, done
+var target = "";              // "Chor" or "Dakat" (Babu's order)
+var currentCard = 0;          // the card the current player is holding
+var peeked = false;           // has the player looked at the card yet?
+
+// ===== Small helper functions =====
+function getEl(id) {
+  return document.getElementById(id);
+}
+
+function getCards() {
+  return document.querySelectorAll(".card");
+}
+
+// stops names like <b> from breaking the page
+function safe(text) {
+  text = String(text);
+  text = text.replace(/&/g, "&amp;");
+  text = text.replace(/</g, "&lt;");
+  text = text.replace(/>/g, "&gt;");
+  return text;
+}
+
+function bold(text) {
+  return "<b>" + safe(text) + "</b>";
+}
+
+// mixes the list in random order
+function shuffle(list) {
+  var result = list.slice();
+  for (var i = result.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var temp = result[i];
+    result[i] = result[j];
+    result[j] = temp;
+  }
+  return result;
+}
+
+// ===== Start the game =====
+function startGame() {
+  var inputs = document.querySelectorAll("#setup input");
+  names = [];
+  for (var i = 0; i < inputs.length; i++) {
+    var name = inputs[i].value.trim();
+    if (name == "") {
+      name = "Player " + (i + 1);
+    }
+    names.push(name);
+  }
+  getEl("setup").style.display = "none";
+  getEl("game").style.display = "block";
+  drawTableHead();
+  drawPlayers();
+  drawTable();
+  newRound();
+}
+
+// ===== New round: shuffle the roles and make 4 cards =====
+function newRound() {
+  roles = shuffle(roleNames);
+  owner = [null, null, null, null];
+  turn = 0;
+  phase = "pick";
+  target = "";
+
+  var html = "";
+  for (var i = 0; i < 4; i++) {
+    html += '<button class="card ' + roles[i] + '">';
+    html += '<div class="card-inner">';
+    html += '<div class="card-front"><div class="card-question">?</div><div class="card-owner"></div></div>';
+    html += '<div class="card-back">';
+    html += '<div class="card-role">' + roles[i] + '</div>';
+    html += '<div class="card-points">' + points[roles[i]] + '</div>';
+    html += '<div class="card-name"></div>';
+    html += '<div class="card-tag" hidden></div>';
+    html += '</div></div></button>';
+  }
+  getEl("board").innerHTML = html;
+
+  var cards = getCards();
+  for (var k = 0; k < cards.length; k++) {
+    setupCard(cards[k], k);
+  }
+  getEl("sumBox").style.display = "none";
+  updateScreen();
+}
+
+// connect click and hold events to one card
+function setupCard(card, i) {
+  card.onclick = function () {
+    cardClicked(i);
+  };
+  card.oncontextmenu = function () {
+    return false; // no long-press menu on phone
+  };
+  card.onpointerdown = function () {
+    startPeek(card, i);
+  };
+  card.onpointerup = function () {
+    stopPeek(card, i);
+  };
+  card.onpointerleave = function () {
+    stopPeek(card, i);
+  };
+  card.onpointercancel = function () {
+    stopPeek(card, i);
+  };
+}
+
+// finger down: show the card
+function startPeek(card, i) {
+  if (phase == "peek" && i == currentCard) {
+    card.classList.add("flip");
+    peeked = true;
+    var doneBtn = getEl("dn");
+    if (doneBtn) {
+      doneBtn.disabled = false;
+    }
+  }
+}
+
+// finger up: hide the card again
+function stopPeek(card, i) {
+  if (phase == "peek" && i == currentCard) {
+    card.classList.remove("flip");
+  }
+}
+
+// ===== A card was tapped =====
+function cardClicked(i) {
+  if (phase == "pick" && owner[i] === null) {
+    // the player takes this card
+    owner[i] = turn;
+    var card = getCards()[i];
+    card.querySelector(".card-owner").textContent = names[turn];
+    card.querySelector(".card-name").textContent = names[turn];
+    var question = card.querySelector(".card-question");
+    question.textContent = "Hold";
+    question.style.fontSize = "28px";
+    currentCard = i;
+    peeked = false;
+    phase = "peek";
+    updateScreen();
+  } else if (phase == "guess" && roles[i] != "Babu" && roles[i] != "Police") {
+    // Police chose this card
+    finishRound(i);
+  }
+}
+
+// ===== Buttons =====
+function donePeek() {
+  var card = getCards()[currentCard];
+  card.classList.remove("flip");
+  card.querySelector(".card-question").textContent = "";
+  turn++;
+  if (turn == 4) {
+    phase = "reveal";
+  } else {
+    phase = "pick";
+  }
+  updateScreen();
+}
+
+function revealBabuPolice() {
+  var cards = getCards();
+  cards[roles.indexOf("Babu")].classList.add("flip");
+  cards[roles.indexOf("Police")].classList.add("flip");
+  phase = "order";
+  updateScreen();
+}
+
+function chooseTarget(choice) {
+  target = choice;
+  phase = "guess";
+  updateScreen();
+}
+
+// ===== Update message, buttons and highlights =====
+function updateScreen() {
+  var msg = getEl("msg");
+  var acts = getEl("acts");
+  acts.innerHTML = "";
+
+  var babu = owner[roles.indexOf("Babu")];
+  var police = owner[roles.indexOf("Police")];
+
+  // while one player is peeking, other free cards are dimmed
+  var cards = getCards();
+  for (var i = 0; i < cards.length; i++) {
+    if (phase == "peek" && owner[i] === null) {
+      cards[i].classList.add("disabled");
+    } else {
+      cards[i].classList.remove("disabled");
+    }
+  }
+
+  // highlight whose turn it is
+  var boxes = document.querySelectorAll(".player-box");
+  for (var j = 0; j < boxes.length; j++) {
+    var active = false;
+    if ((phase == "pick" || phase == "peek") && j == turn) active = true;
+    if (phase == "order" && j == babu) active = true;
+    if (phase == "guess" && j == police) active = true;
+    if (active) {
+      boxes[j].classList.add("active");
+    } else {
+      boxes[j].classList.remove("active");
+    }
+  }
+
+  if (phase == "pick") {
+    msg.innerHTML = bold(names[turn]) + ", phone ta hate nao ar ekta card tolo.";
+  }
+
+  if (phase == "peek") {
+    msg.innerHTML = bold(names[turn]) + ", card ta <b>chepe dhoro</b> dekhte. Chere dile lukiye jabe.";
+    var disabledText = "";
+    if (!peeked) disabledText = " disabled";
+    acts.innerHTML = '<button class="btn" id="dn"' + disabledText + '>Done, pass the phone</button>';
+    getEl("dn").onclick = donePeek;
+  }
+
+  if (phase == "reveal") {
+    msg.innerHTML = "Sobai card niyeche. <b>Police</b> ar <b>Babu</b> jor gola-y nijer porichoy dao! Tarpor reveal chapo.";
+    acts.innerHTML = '<button class="btn" id="rv">Reveal Babu &amp; Police</button>';
+    getEl("rv").onclick = revealBabuPolice;
+  }
+
+  if (phase == "order") {
+    msg.innerHTML = bold(names[babu]) + " (Babu), " + bold(names[police]) + " ke bolo kake khujte hobe:";
+    acts.innerHTML = '<button class="btn btn-teal" id="chorBtn">Find the Chor</button>' +
+                     '<button class="btn btn-pink" id="dakatBtn">Find the Dakat</button>';
+    getEl("chorBtn").onclick = function () {
+      chooseTarget("Chor");
+    };
+    getEl("dakatBtn").onclick = function () {
+      chooseTarget("Dakat");
+    };
+  }
+
+  if (phase == "guess") {
+    msg.innerHTML = bold(names[police]) + " (Police), <b>" + target + "</b> ke dhoro. Duto card er ekta tolo.";
+  }
+}
+
+// ===== Police guessed: calculate points =====
+function finishRound(chosenCard) {
+  var correct = (roles[chosenCard] == target);
+  var roundPoints = [0, 0, 0, 0];
+
+  // everyone gets the points of their role
+  for (var k = 0; k < 4; k++) {
+    roundPoints[owner[k]] = points[roles[k]];
+  }
+
+  var policeCard = roles.indexOf("Police");
+  var targetCard = roles.indexOf(target);
+
+  if (correct) {
+    roundPoints[owner[targetCard]] = 0;   // caught! Chor/Dakat gets 0
+  } else {
+    roundPoints[owner[policeCard]] = 0;   // wrong guess! Police gets 0
+  }
+
+  for (var p = 0; p < 4; p++) {
+    totals[p] = totals[p] + roundPoints[p];
+  }
+  rows.push({ target: target, pts: roundPoints });
+  phase = "done";
+
+  // show all cards
+  var cards = getCards();
+  for (var i = 0; i < cards.length; i++) {
+    cards[i].classList.remove("disabled");
+    cards[i].classList.add("flip");
+
+    var lost = false;
+    if (correct && i == targetCard) lost = true;
+    if (!correct && i == policeCard) lost = true;
+
+    if (lost) {
+      cards[i].classList.add("lost");
+      cards[i].querySelector(".card-points").textContent = 0;
+      var tag = cards[i].querySelector(".card-tag");
+      tag.hidden = false;
+      if (correct) {
+        tag.textContent = "Caught";
+      } else {
+        tag.textContent = "Wrong guess";
+      }
+    }
+  }
+
+  drawPlayers();
+  drawTable();
+
+  var policeName = names[owner[policeCard]];
+  var targetName = names[owner[targetCard]];
+  if (correct) {
+    getEl("msg").innerHTML = bold(policeName) + " dhorlo " + bold(targetName) + " ke (" + target + "). " + bold(targetName) + " pelo 0.";
+  } else {
+    getEl("msg").innerHTML = bold(policeName) + " bhul card tulche. Police pelo 0, " + bold(targetName) + " er " + target + " nijer point rakhlo.";
+  }
+
+  getEl("acts").innerHTML = '<button class="btn" id="nx">Next round</button>';
+  getEl("nx").onclick = newRound;
+}
+
+// ===== Draw player boxes and score table =====
+function drawPlayers() {
+  var html = "";
+  for (var i = 0; i < 4; i++) {
+    html += '<div class="player-box">';
+    html += '<span class="player-name">' + safe(names[i]) + '</span>';
+    html += '<span class="player-score">' + totals[i] + '</span>';
+    html += '</div>';
+  }
+  getEl("chips").innerHTML = html;
+}
+
+function drawTableHead() {
+  var html = "<tr><th>#</th><th>Find</th>";
+  for (var i = 0; i < 4; i++) {
+    html += "<th>" + safe(names[i]) + "</th>";
+  }
+  html += "</tr>";
+  getEl("thead").innerHTML = html;
+}
+
+function drawTable() {
+  var html = "";
+  if (rows.length == 0) {
+    html = '<tr><td colspan="6" class="empty">Prothom round sesh hole score ekhane ashbe.</td></tr>';
+  }
+  for (var i = 0; i < rows.length; i++) {
+    html += "<tr><td>" + (i + 1) + "</td><td>" + rows[i].target + "</td>";
+    for (var j = 0; j < 4; j++) {
+      html += "<td>" + rows[i].pts[j] + "</td>";
+    }
+    html += "</tr>";
+  }
+  getEl("tbody").innerHTML = html;
+
+  var foot = '<tr><td colspan="2">Total</td>';
+  for (var k = 0; k < 4; k++) {
+    foot += "<td>" + totals[k] + "</td>";
+  }
+  foot += "</tr>";
+  getEl("tfoot").innerHTML = foot;
+}
+
+// ===== Summary: final ranking =====
+function showSummary() {
+  var list = [];
+  for (var i = 0; i < 4; i++) {
+    // rank = how many players have a higher score
+    var higher = 0;
+    for (var j = 0; j < 4; j++) {
+      if (totals[j] > totals[i]) higher++;
+    }
+    list.push({ name: names[i], score: totals[i], rank: ranks[higher] });
+  }
+  list.sort(function (a, b) {
+    return b.score - a.score;
+  });
+
+  var html = "<h2>Summary after " + rows.length + " round(s)</h2>";
+  for (var k = 0; k < list.length; k++) {
+    html += '<div class="rank-row"><span>' + safe(list[k].name) + '</span>';
+    html += '<span>' + list[k].score + ' pts &nbsp;<b>' + list[k].rank + '</b></span></div>';
+  }
+  getEl("sumBox").innerHTML = html;
+  getEl("sumBox").style.display = "block";
+}
+
+// ===== Connect the main buttons =====
+getEl("startBtn").onclick = startGame;
+getEl("sumBtn").onclick = showSummary;
+</script>
+</body>
+</html>
