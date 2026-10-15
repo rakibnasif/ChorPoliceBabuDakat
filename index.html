@@ -373,7 +373,7 @@ tfoot td {
     <section id="setup">
       <div class="setup-box">
         <div class="game-title">Chor Police<br><span>Babu Dakat</span></div>
-        <p class="subtitle">Babu hukum dey, Police chhute, Chor-Dakat mukh lukay. Aaj ke dhora porbe?</p>
+        <p class="subtitle">Babu hukum dey, Police chhute, Chor-Dakat mukh lukay. Aaj kar mukh dhora porbe?</p>
         <input placeholder="Player 1" maxlength="14">
         <input placeholder="Player 2" maxlength="14">
         <input placeholder="Player 3" maxlength="14">
@@ -421,7 +421,8 @@ var totals = [0, 0, 0, 0];    // total score of each player
 var rows = [];                // one entry per finished round
 var roles = [];               // role on each card
 var owner = [];               // which player took each card (null = not taken yet)
-var turn = 0;                 // which player is picking now (0 to 3)
+var turn = 0;                 // which pick number it is now (0 to 3)
+var pickOrder = [0, 1, 2, 3]; // order of players for this round (shuffled every round)
 var phase = "";               // pick, peek, reveal, order, guess, done
 var target = "";              // "Chor" or "Dakat" (Babu's order)
 var currentCard = 0;          // the card the current player is holding
@@ -485,6 +486,7 @@ function newRound() {
   roles = shuffle(roleNames);
   owner = [null, null, null, null];
   turn = 0;
+  pickOrder = shuffle([0, 1, 2, 3]); // new random order every round
   phase = "pick";
   target = "";
 
@@ -555,10 +557,10 @@ function stopPeek(card, i) {
 function cardClicked(i) {
   if (phase == "pick" && owner[i] === null) {
     // the player takes this card
-    owner[i] = turn;
+    owner[i] = pickOrder[turn];
     var card = getCards()[i];
-    card.querySelector(".card-owner").textContent = names[turn];
-    card.querySelector(".card-name").textContent = names[turn];
+    card.querySelector(".card-owner").textContent = names[pickOrder[turn]];
+    card.querySelector(".card-name").textContent = names[pickOrder[turn]];
     var question = card.querySelector(".card-question");
     question.textContent = "Hold";
     question.style.fontSize = "28px";
@@ -623,7 +625,7 @@ function updateScreen() {
   var boxes = document.querySelectorAll(".player-box");
   for (var j = 0; j < boxes.length; j++) {
     var active = false;
-    if ((phase == "pick" || phase == "peek") && j == turn) active = true;
+    if ((phase == "pick" || phase == "peek") && j == pickOrder[turn]) active = true;
     if (phase == "order" && j == babu) active = true;
     if (phase == "guess" && j == police) active = true;
     if (active) {
@@ -634,11 +636,11 @@ function updateScreen() {
   }
 
   if (phase == "pick") {
-    msg.innerHTML = bold(names[turn]) + ", phone ta hate nao ar ekta card tolo.";
+    msg.innerHTML = bold(names[pickOrder[turn]]) + ", phone ta hate nao ar ekta card tolo.";
   }
 
   if (phase == "peek") {
-    msg.innerHTML = bold(names[turn]) + ", card ta <b>chepe dhoro</b> dekhte. Chere dile lukiye jabe.";
+    msg.innerHTML = bold(names[pickOrder[turn]]) + ", card ta <b>chepe dhoro</b> dekhte. Chere dile lukiye jabe.";
     var disabledText = "";
     if (!peeked) disabledText = " disabled";
     acts.innerHTML = '<button class="btn" id="dn"' + disabledText + '>Done, pass the phone</button>';
